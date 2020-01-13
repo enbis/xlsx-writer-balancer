@@ -2,6 +2,7 @@ package wb
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/apex/log"
 	"github.com/tealeg/xlsx"
@@ -29,14 +30,33 @@ func Process(filename string, value interface{}) {
 	_, ok := m[filename]
 	if !ok {
 		createFile(filename)
-		log.Infof("File Creato \n")
 	}
 
 	createReq(c, filename, value)
 
 }
 
+func fileExists(filename string) bool {
+	info, err := os.Stat(fmt.Sprintf("%s.xlsx", filename))
+
+	if os.IsNotExist(err) {
+		return false
+	}
+
+	return !info.IsDir()
+}
+
 func createFile(filename string) {
+
+	if fileExists(filename) {
+		xlFile, err := xlsx.OpenFile(fmt.Sprintf("%s.xlsx", filename))
+		if err != nil {
+			log.Errorf("Error opening file xlsx %v", err)
+		}
+		wref := fileRef{id: filename, file: xlFile}
+		m[filename] = wref
+		return
+	}
 
 	var file *xlsx.File
 	var err error
